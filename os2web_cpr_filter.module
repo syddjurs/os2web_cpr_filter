@@ -1,0 +1,88 @@
+<?php
+/**
+ * @file
+ *   OS2Web CPR-number filter module hooks and functions.
+ */
+
+/**
+ * Implements hook_filter_info().
+ */
+function os2web_cpr_filter_filter_info() {
+  $filters = array();	
+  $filters['os2web_cpr_filter'] = array(
+    'title' => t('OS2Web CPR-number filter'),
+    'description' => t('Searching for CPR-numbers with/without modulus11 validation and replace matches with dummy value.'),
+    'process callback' => '_os2web_cpr_filter_process',
+    'settings callback' => '_os2web_cpr_filter_settings',
+    'default settings' => array(
+      'modulus11_check' => TRUE,
+	  'dummy_value' => 'XXXXXX-XXXX',	
+    ),
+  );
+  return $filters;
+}
+
+/**
+ * Filter settings form callback function.
+ */
+function _os2web_cpr_filter_settings($form, &$form_state, $filter, $format, $defaults) {
+  $filter->settings += $defaults;
+
+  $settings['modulus11_check'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Validate found CPR-numbers with modulus11? If, enabled will only validated CPR-numbers be replaced with a dummy value.'),
+    '#default_value' => $filter->settings['modulus11_check'],
+  );
+  $settings['dummy_value'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Dummy value'),
+    '#default_value' => $filter->settings['dummy_value'],
+    '#maxlength' => 32,
+    '#description' => t('The value we are replacing found CPR-numbers with.'),
+  );
+  return $settings;
+}
+
+/**
+ * Filter process callback function.
+ */
+function _os2web_cpr_filter_process($text, $filter) {
+  // Finding matches
+  preg_match_all("/([0-9]{6})(-?)([0-9]{4})/", $text, $matches);
+  
+  // Looping through matches and replacing them
+  $replace = array();
+  foreach (current($matches) as $value) {
+    if (!$filter->settings['modulus11_check'] || _os2web_cpr_filter_modulus11($value)) {
+      $replace[$value] = $value;     	
+    }	  
+  }
+  
+  // Replacing the CPR-numbers
+  $text = str_replace($replace, $filter->settings['dummy_value'], $text);
+  
+  return $text;
+}
+
+/**
+ * Validate a number against modulus 11.
+ */
+function _os2web_cpr_filter_modulus11($number) {
+  $number = str_replace('-', '', $number);
+  $factor = '432765432';
+  $number_arr = str_split($number);
+  $factor_arr = str_split($factor);
+  $control = end($number_arr);
+  $sum = 0;
+  for ($i = 0; $i < 9; $i++) {
+    $sum += $number_arr[$i] * $factor_arr[$i];
+  }
+  $remainder = $sum % 11;
+  $result = 11 - $remainder;
+  /*
+   If the product generated through the modulus 11 calculations is evenly divisible by 11 (no remainder), 
+   the resulting check digit is 11. In this case, the digit 0 is appended to the basic number.
+  */
+  $result = ($result == 11) ? $result % 11 : $result;
+  return ($control == $result);
+}
