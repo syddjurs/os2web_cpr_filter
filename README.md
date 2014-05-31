@@ -7,10 +7,10 @@ Drupal text filter searching texts for CPR-numbers using the Drupal core
 filter API and replacing them.
 
 It supports modulus11 validation of the found CPR-numbers to avoid replacing
-non modulus11-valid CPR-numbers. 
+non modulus11 valid numbers. 
 
 The replacement value can be edited in the filter settings. By default is it
-XXXXXX-XXXX
+XXXXXX-XXXX.
 
 Installation
 ------------
