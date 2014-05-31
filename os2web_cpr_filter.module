@@ -16,7 +16,7 @@ function os2web_cpr_filter_filter_info() {
     'settings callback' => '_os2web_cpr_filter_settings',
     'default settings' => array(
       'modulus11_check' => TRUE,
-	  'dummy_value' => 'XXXXXX-XXXX',	
+      'dummy_value' => 'XXXXXX-XXXX',	
     ),
   );
   return $filters;
@@ -66,6 +66,11 @@ function _os2web_cpr_filter_process($text, $filter) {
 
 /**
  * Validate a number against modulus 11.
+ *
+ * @param string $number
+ *   The number being validated. Dash is stripped.
+ * 
+ * @return bool
  */
 function _os2web_cpr_filter_modulus11($number) {
   $number = str_replace('-', '', $number);
