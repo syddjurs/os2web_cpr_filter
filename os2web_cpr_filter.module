@@ -70,9 +70,9 @@ function _os2web_cpr_filter_process($text, $filter) {
       $replace[$value] = $value;     	
     }
     // Replacing all numbers containing a dash
-	  else if ($filter->settings['replace_all_dash'] && strpos($value, '-') !== FALSE) {
-		  $replace[$value] = $value;
-	  }
+    else if ($filter->settings['replace_all_dash'] && strpos($value, '-') !== FALSE) {
+      $replace[$value] = $value;
+    }
     // Date check
     else if ($filter->settings['date_check'] && isset($modulus11_result) && !$modulus11_result) {
       if (_os2web_cpr_filter_date_check($value)) {
