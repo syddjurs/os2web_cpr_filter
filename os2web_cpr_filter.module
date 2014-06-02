@@ -16,6 +16,8 @@ function os2web_cpr_filter_filter_info() {
     'settings callback' => '_os2web_cpr_filter_settings',
     'default settings' => array(
       'modulus11_check' => TRUE,
+      'date_check' => TRUE,
+      'replace_all_dash' => TRUE,
       'dummy_value' => 'XXXXXX-XXXX',	
     ),
   );
@@ -30,9 +32,19 @@ function _os2web_cpr_filter_settings($form, &$form_state, $filter, $format, $def
 
   $settings['modulus11_check'] = array(
     '#type' => 'checkbox',
-    '#title' => t('Validate found CPR-numbers with modulus11? If, enabled will only validated CPR-numbers be replaced with a dummy value.'),
+    '#title' => t('Validate found numbers with modulus11? If, enabled will only validated numbers be replaced with a dummy value.'),
     '#default_value' => $filter->settings['modulus11_check'],
   );
+  $settings['date_check'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Validate date of found numbers if they fail modulus11 check? If, enabled will non modulus11 valid numbers have their date-part validated and numbers with a valid date will be replaced.'), 		
+    '#default_value' => $filter->settings['date_check'],
+  );  
+  $settings['replace_all_dash'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Replace all numbers matching the format XXXXXX-XXXX with a dummy value.'),		
+    '#default_value' => $filter->settings['replace_all_dash'],
+  );  
   $settings['dummy_value'] = array(
     '#type' => 'textfield',
     '#title' => t('Dummy value'),
@@ -53,11 +65,22 @@ function _os2web_cpr_filter_process($text, $filter) {
   // Looping through matches and replacing them
   $replace = array();
   foreach (current($matches) as $value) {
-    if (!$filter->settings['modulus11_check'] || _os2web_cpr_filter_modulus11($value)) {
+    // Modulus11 check
+    if (!$filter->settings['modulus11_check'] || $modulus11_result = _os2web_cpr_filter_modulus11($value)) {
       $replace[$value] = $value;     	
-    }	  
+    }
+    // Replacing all numbers containing a dash
+	  else if ($filter->settings['replace_all_dash'] && strpos($value, '-') !== FALSE) {
+		  $replace[$value] = $value;
+	  }
+    // Date check
+    else if ($filter->settings['date_check'] && isset($modulus11_result) && !$modulus11_result) {
+      if (_os2web_cpr_filter_date_check($value)) {
+        $replace[$value] = $value;
+      }
+    }
   }
-  
+
   // Replacing the CPR-numbers
   $text = str_replace($replace, $filter->settings['dummy_value'], $text);
   
@@ -90,4 +113,21 @@ function _os2web_cpr_filter_modulus11($number) {
   */
   $result = ($result == 11) ? $result % 11 : $result;
   return ($control == $result);
+}
+
+/**
+ * Validate the date part (first 6 characters) of a number.
+ *
+ * @param string $number
+ *   The number being validated. Dash is stripped.
+ *
+ * @return bool
+ */
+function _os2web_cpr_filter_date_check($number) {
+  $number = str_replace('-', '', $number);
+  $day = substr($number, 0, 2);
+  $month = substr($number, 2, 2);
+  $year = substr($number, 4, 2);
+  $year_long = (date('y') < $year) ? (1900 + $year) : (2000 + $year);
+  return checkdate($month, $day, $year);
 }
