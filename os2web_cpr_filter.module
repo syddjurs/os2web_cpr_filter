@@ -141,18 +141,18 @@ function _os2web_cpr_filter_date_check($number) {
       break;
     case 4:
       // 2000-2036 or 1937-1999
-      $prefix_year = ($this->year > 36) ? 19 : 20;
+      $prefix_year = ($year > 36) ? 19 : 20;
       break;
     case 5:
     case 6:
     case 7:
     case 8:
       // 2000-2057 or 1858-1899
-      $prefix_year = ($this->year > 57) ? 18 : 20;
+      $prefix_year = ($year > 57) ? 18 : 20;
       break;
     case 9:
       // 2000-2036 or 1937-1999
-      $prefix_year = ($this->year > 37) ? 19 : 20;
+      $prefix_year = ($year > 37) ? 19 : 20;
       break;
     default:
       return FALSE;
